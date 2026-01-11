@@ -51,6 +51,28 @@ export const useFavorites = defineStore("favorites", () => {
     }
   }
 
+  async function favoritePost(postId) {
+    try {
+      await $api.post(`posts/${postId}/favorite`);
+      favoritedPostIds.value = new Set([...favoritedPostIds.value, postId]);
+    } catch (error) {
+      console.error("Failed to favorite post:", error);
+      throw error;
+    }
+  }
+
+  async function unfavoritePost(postId) {
+    try {
+      await $api.delete(`posts/${postId}/favorite`);
+      const newSet = new Set(favoritedPostIds.value);
+      newSet.delete(postId);
+      favoritedPostIds.value = newSet;
+    } catch (error) {
+      console.error("Failed to unfavorite post:", error);
+      throw error;
+    }
+  }
+
   function clear() {
     favoritedUserIds.value = new Set();
     favoritedPostIds.value = new Set();
@@ -64,6 +86,8 @@ export const useFavorites = defineStore("favorites", () => {
     fetchFavorites,
     favoriteUser,
     unfavoriteUser,
+    favoritePost,
+    unfavoritePost,
     clear,
   };
 });
