@@ -1,68 +1,67 @@
-import { find, uniq, get } from 'lodash-es'
+export const useUser = defineStore("user", () => {
+  const { $api } = useNuxtApp();
 
-export const useUser = defineStore('user', () => {
-  const { $api } = useNuxtApp()
+  const { getCookieParams } = useHelpers();
 
-  const { getCookieParams } = useHelpers()
+  const started = ref(false);
 
-  const started = ref(false)
+  const data = ref({});
 
-  const data = ref({})
+  const token = ref(null);
 
-  const token = ref(null)
+  const tokenCookie = useCookie("jwt", getCookieParams());
 
-  const tokenCookie = useCookie('jwt', getCookieParams())
+  const isGuest = computed(() => !Object.keys(data.value).length);
 
-  const isGuest = computed(() => !Object.keys(data.value).length)
+  const name = computed(() => (isGuest.value ? null : data.value.name));
 
-  const name = computed(() => isGuest.value ? null : data.value.name)
+  async function start(payload) {
+    started.value = true;
+    data.value = payload.data;
+    token.value = payload.token;
 
-  async function start (payload) {
-    started.value = true
-    data.value = payload.data
-    token.value = payload.token
-
-    // Write cookie
-    tokenCookie.value = payload.token
+    tokenCookie.value = payload.token;
   }
 
-  function clear () {
-    data.value = {}
-    token.value = null
-    tokenCookie.value = null
+  function clear() {
+    data.value = {};
+    token.value = null;
+    tokenCookie.value = null;
   }
 
-  async function login ({ email, password }) {
-    const payload = await $api.post('/login', { email, password })
-    start(payload)
+  async function login({ email, password }) {
+    const payload = await $api.post("/login", { email, password });
+    start(payload);
   }
 
-  async function register ({ name, email, password }) {
-    const payload = await $api.post('/register', {
+  async function register({ name, email, password }) {
+    const payload = await $api.post("/register", {
       name,
       email,
       password,
-      password_confirmation: password
-    })
+      password_confirmation: password,
+    });
 
-    start(payload)
+    start(payload);
   }
 
-  async function validate () {
-    // Skip if the browser does not have a "jwt" cookie or the session has already started
-    if (!tokenCookie.value || started.value) return
+  async function validate() {
+    if (!tokenCookie.value || started.value) return;
 
     try {
-      const payload = await $api.get('/session')
-      start(payload)
+      const payload = await $api.get("/session");
+      start(payload);
     } catch (e) {
-      clear()
+      clear();
     }
   }
 
-  async function logout () {
-    await $api.post('/logout')
-    clear()
+  async function logout() {
+    await $api.post("/logout");
+    clear();
+
+    const favorites = useFavorites();
+    favorites.clear();
   }
 
   return {
@@ -74,10 +73,10 @@ export const useUser = defineStore('user', () => {
     login,
     register,
     validate,
-    logout
-  }
-})
+    logout,
+  };
+});
 
 if (import.meta.hot) {
-  import.meta.hot.accept(acceptHMRUpdate(useUser, import.meta.hot))
+  import.meta.hot.accept(acceptHMRUpdate(useUser, import.meta.hot));
 }

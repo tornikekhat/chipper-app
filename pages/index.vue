@@ -5,8 +5,13 @@ definePageMeta({
 
 const user = useUser();
 const postsStore = usePosts();
+const favoritesStore = useFavorites();
 
 await postsStore.fetchPosts();
+
+if (!user.isGuest) {
+  await favoritesStore.fetchFavorites();
+}
 </script>
 
 <template>
